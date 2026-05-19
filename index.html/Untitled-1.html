@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Torre de Hanoi</title>
+
+<style>
+
+body{
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f4f4;
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+}
+
+h1{
+    color: #222;
+}
+
+.info{
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    width: 80%;
+    margin: auto;
+    margin-bottom: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.game-area{
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 40px;
+    margin-top: 30px;
+}
+
+.tower{
+    width: 220px;
+    height: 320px;
+    border: 2px solid #333;
+    position: relative;
+    background: white;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    padding-bottom: 10px;
+}
+
+.rod{
+    position: absolute;
+    width: 10px;
+    height: 250px;
+    background: #333;
+    bottom: 0;
+}
+
+.disk{
+    height: 28px;
+    border-radius: 6px;
+    margin-top: 5px;
+    cursor: grab;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.controls{
+    margin-top: 20px;
+}
+
+button{
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    background: #222;
+    color: white;
+}
+
+select{
+    padding: 8px;
+    font-size: 16px;
+}
+
+.status{
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>Torre de Hanoi</h1>
+
+<div class="info">
+    <p>
+        <strong>Universidade Tecnológica Federal do Paraná (UTFPR) - Campus Londrina</strong>
+    </p>
+
+    <p>
+        Disciplina: Matemática Discreta
+    </p>
+
+    <p>
+        Professor: Alireza Mohebi Ashtiani
+    </p>
+
+    <p>
+        Discente: Nathan Pantoja
+    </p>
+</div>
+
+<div class="controls">
+
+    <label>Número de discos:</label>
+
+    <select id="diskCount">
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+    </select>
+
+    <button onclick="startGame()">
+        Iniciar Jogo
+    </button>
+
+</div>
+
+<h3 id="minimumMoves"></h3>
+<h3 id="moveCounter">Movimentos: 0</h3>
+
+<div class="game-area">
+
+    <div class="tower" id="tower1">
+        <div class="rod"></div>
+    </div>
+
+    <div class="tower" id="tower2">
+        <div class="rod"></div>
+    </div>
+
+    <div class="tower" id="tower3">
+        <div class="rod"></div>
+    </div>
+
+</div>
+
+<div class="status" id="status"></div>
+
+<script>
+
+let moveCount = 0;
+let minimumMoves = 0;
+let totalDisks = 3;
+
+const colors = [
+    "#e74c3c",
+    "#3498db",
+    "#2ecc71",
+    "#f39c12",
+    "#9b59b6",
+    "#1abc9c"
+];
+
+function startGame(){
+
+    moveCount = 0;
+
+    document.getElementById("moveCounter").innerText =
+        "Movimentos: 0";
+
+    document.getElementById("status").innerText = "";
+
+    totalDisks =
+        parseInt(document.getElementById("diskCount").value);
+
+    minimumMoves = Math.pow(2, totalDisks) - 1;
+
+    document.getElementById("minimumMoves").innerText =
+        "Número máximo de movimentos: " + minimumMoves;
+
+    const towers = document.querySelectorAll(".tower");
+
+    towers.forEach(tower => {
+
+        tower.querySelectorAll(".disk").forEach(disk => {
+            disk.remove();
+        });
+
+    });
+
+    const tower1 = document.getElementById("tower1");
+
+    for(let i = totalDisks; i >= 1; i--){
+
+        const disk = document.createElement("div");
+
+        disk.classList.add("disk");
+
+        disk.draggable = true;
+
+        disk.dataset.size = i;
+
+        disk.style.width = (50 + i * 25) + "px";
+
+        disk.style.background =
+            colors[(i - 1) % colors.length];
+
+        disk.innerText = i;
+
+        addDragEvents(disk);
+
+        tower1.appendChild(disk);
+    }
+
+}
+
+function addDragEvents(disk){
+
+    disk.addEventListener("dragstart", dragStart);
+
+}
+
+let draggedDisk = null;
+let originTower = null;
+
+function dragStart(event){
+
+    draggedDisk = event.target;
+
+    originTower = draggedDisk.parentElement;
+
+}
+
+const towers = document.querySelectorAll(".tower");
+
+towers.forEach(tower => {
+
+    tower.addEventListener("dragover", (event) => {
+        event.preventDefault();
+    });
+
+    tower.addEventListener("drop", dropDisk);
+
+});
+
+function dropDisk(event){
+
+    event.preventDefault();
+
+    const targetTower = event.currentTarget;
+
+    const disks =
+        targetTower.querySelectorAll(".disk");
+
+    const topDisk =
+        disks[disks.length - 1];
+
+    if(draggedDisk !==
+        originTower.querySelector(".disk:last-child")){
+
+        return;
+    }
+
+    if(
+        !topDisk ||
+        parseInt(draggedDisk.dataset.size) <
+        parseInt(topDisk.dataset.size)
+    ){
+
+        targetTower.appendChild(draggedDisk);
+
+        moveCount++;
+
+        document.getElementById("moveCounter").innerText =
+            "Movimentos: " + moveCount;
+
+        checkVictory();
+
+    } else {
+
+        originTower.appendChild(draggedDisk);
+
+    }
+
+}
+
+function checkVictory(){
+
+    const tower3 =
+        document.getElementById("tower3");
+
+    const disks =
+        tower3.querySelectorAll(".disk");
+
+    if(disks.length === totalDisks){
+
+        document.getElementById("status").innerHTML =
+            "Parabéns! Você concluiu o jogo em "
+            + moveCount +
+            " movimentos!";
+
+        return;
+    }
+
+    if(moveCount >= minimumMoves){
+
+        document.getElementById("status").innerHTML =
+            "Game Over! Você atingiu o número máximo de movimentos sem completar a solução.";
+
+    }
+
+}
+
+startGame();
+
+</script>
+
+</body>
+</html>
